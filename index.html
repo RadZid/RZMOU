@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الشراكات الجامعية العالمية | University Global Partnerships</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        .country {
+            fill: #e0e0e0;
+            stroke: #fff;
+            stroke-width: 0.5px;
+            transition: fill 0.3s ease;
+        }
+        
+        .country:hover {
+            fill: #b3d1ff;
+            cursor: pointer;
+        }
+        
+        .country-partnership {
+            fill: #e0e0e0;
+        }
+        
+        .country-partnership:hover, .country-highlighted {
+            fill: #4a90e2;
+        }
+        
+        .partnership-icon {
+            pointer-events: none;
+        }
+        
+        .info-panel {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 16px;
+            z-index: 100;
+            max-width: 300px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .info-panel.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .info-panel::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            margin-left: -10px;
+            border-width: 0 10px 10px;
+            border-style: solid;
+            border-color: transparent transparent white;
+        }
+        
+        .map-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #f8fafc;
+        }
+        
+        @media (max-width: 768px) {
+            .map-container {
+                height: 400px;
+            }
+            
+            .country-list {
+                max-height: 100px;
+                overflow-y: auto;
+            }
+            
+            .chart-container {
+                height: 300px !important;
+		    color: #FFFF00; /* Yellow font color */
+
+            }
+        }
+        
+        .university-item {
+            transition: all 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        .university-item.expanded {
+            max-height: 500px;
+            margin-top: 8px;
+        }
+        
+        .rotate-arrow {
+            transform: rotate(180deg);
+            transition: transform 0.3s ease;
+        }
+        
+.dark body {
+    background-color: #333;
+    color: white;
+}
+
+        .dark-mode .country {
+            fill: #374151;
+            stroke: #4B5563;
+        }
+        
+        .dark-mode .country-partnership {
+            fill: #374151;
+        }
+        
+        .dark-mode .country-partnership:hover, 
+        .dark-mode .country-highlighted {
+            fill: #3B82F6;
+        }
+        
+        .dark-mode {
+            background-color: #111827;
+            color: #E5E7EB;
+        }
+        
+        .dark-mode .bg-white {
+            background-color: #1F2937 !important;
+        }
+        
+        .dark-mode .text-gray-800 {
+            color: #E5E7EB !important;
+        }
+        
+        .dark-mode .text-gray-600 {
+            color: #9CA3AF !important;
+        }
+        
+        .dark-mode .bg-gray-50 {
+            background-color: #1F2937 !important;
+        }
+        
+        .dark-mode .border-gray-200 {
+            border-color: #374151 !important;
+        }
+        
+        .dark-mode .info-panel {
+            background-color: #1F2937;
+            color: #E5E7EB;
+        }
+        
+        .dark-mode .info-panel::after {
+            border-color: transparent transparent #1F2937;
+        }
+        
+        [dir="rtl"] .info-panel::after {
+            left: auto;
+            right: 50%;
+            margin-right: -10px;
+            margin-left: 0;
+        }
+        
+        .language-switch {
+            position: fixed;
+            top: 20px;
+            right: 150px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .dark-toggle {
+            position: fixed;
+            bottom: 70px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        [dir="rtl"] .language-switch {
+            right: auto;
+            left: 150px;
+        }
+        
+        [dir="rtl"] .dark-toggle {
+            right: auto;
+            left: 20px;
+        }
+
+ 
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in {
+    animation: fade-in 1s ease-out forwards;
+  }
+  .animate-slide-up {
+    animation: slide-up 1.2s ease-out forwards;
+  }
+ 
+
+ 
+@keyframes spin-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 60s linear infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 10s ease-in-out infinite;
+}
+ 
+
+ 
+@keyframes fade-in-slow {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-fade-in-slow {
+  animation: fade-in-slow 2s ease-in-out;
+}
+ 
+
+
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+ <div class="relative overflow-hidden bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 mb-8">
+  <!-- Decorative SVG background for symbolic global cooperation -->
+  <div class="absolute inset-0 pointer-events-none opacity-10 z-0">
+    <svg class="absolute -top-10 -left-10 w-72 h-72 animate-spin-slow" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#3B82F6" d="M45.2,-53.2C57.3,-43.6,65.9,-28.7,65.5,-14.4C65.2,0,55.9,13.6,46.2,23.7C36.5,33.8,26.3,40.3,13.3,51.7C0.2,63,-15.5,79.3,-27.6,76.6C-39.8,73.9,-48.4,52.3,-52.9,34.2C-57.5,16.2,-58.1,1.6,-54.1,-11.2C-50.2,-24,-41.6,-34.9,-31.4,-45.4C-21.2,-55.9,-10.6,-66,-0.4,-65.4C9.8,-64.9,19.6,-53,45.2,-53.2Z" transform="translate(100 100)" />
+    </svg>
+
+    <svg class="absolute -bottom-12 -right-12 w-64 h-64 animate-pulse-slow" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#8B5CF6" d="M43.1,-47.9C55.1,-37.4,63.5,-21.9,63.6,-6.8C63.7,8.3,55.6,23.2,44.2,33.9C32.8,44.6,18.2,51.1,1.2,50.2C-15.7,49.2,-31.4,40.9,-42.6,28.6C-53.9,16.3,-60.6,0.1,-58.6,-15.9C-56.6,-31.9,-46,-47.8,-32,-58.4C-18,-69,-0.5,-74.2,13.5,-68.4C27.5,-62.6,38.2,-45.9,43.1,-47.9Z" transform="translate(100 100)" />
+    </svg>
+  </div>
+
+  <!-- Text content -->
+  <div class="relative z-10 text-center max-w-4xl mx-auto">
+    <h1 class="text-3xl md:text-4xl font-bold text-blue-800 dark:text-blue-200 mb-4 rtl:text-right ltr:text-left animate-fade-in" data-i18n="title">
+      الشراكات الجامعية العالمية - R. Z 
+    </h1>
+    <p class="text-gray-600 dark:text-gray-300 text-base md:text-lg rtl:text-right ltr:text-left animate-slide-up" data-i18n="subtitle">
+      التعاون الدولي مع مؤسسات مرموقة حول العالم
+    </p>
+
+<p id="dynamic-quote" class="mt-4 italic text-sm md:text-base text-blue-600 dark:text-blue-300 animate-fade-in-slow">
+  "Education is the most powerful weapon which you can use to change the world."
+</p>
+
+  </div>
+</div>
+
+
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <div class="map-container relative">
+                <div id="world-map" class="w-full h-full min-h-[400px]"></div>
+                <div id="info-panel" class="info-panel">
+                    <div class="flex items-center mb-3 rtl:flex-row-reverse">
+                        <img id="country-flag" class="w-8 h-6 mr-2 rtl:mr-0 rtl:ml-2 rounded-sm shadow" src="" alt="Flag">
+  <h3 id="country-name" class="font-bold text-lg text-red-600 dark:text-red-600 mx-1 rtl:mx-2"></h3>
+                        <span id="partnership-count" class="ml-2 rtl:ml-0 rtl:mr-2 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full"></span>
+                    </div>
+                    <div id="universities-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-6 rtl:text-right ltr:text-left" data-i18n="chartTitle">إحصائيات الشراكات حسب الدولة</h2>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="partnershipsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-6 rtl:text-right ltr:text-left" data-i18n="partnerCountries">دول الشركاء</h2>
+            <div id="country-list" class="country-list space-y-2">
+                <!-- Countries will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="language-switch">
+        <button id="switchToEnglish" class="p-3 rounded-full bg-blue-800 text-white shadow-lg hover:bg-blue-700 transition">
+            English
+        </button>
+        <button id="switchToArabic" class="p-3 rounded-full bg-blue-800 text-white shadow-lg hover:bg-blue-700 transition">
+            العربية
+        </button>
+    </div>
+    
+    <div class="dark-toggle">
+        <button id="darkModeToggleBottom" class="p-3 rounded-full bg-gray-200 dark:bg-gray-700 shadow-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+            <i class="fas fa-moon dark:hidden"></i>
+            <i class="fas fa-sun hidden dark:block text-yellow-300"></i>
+        </button>
+    </div>
+
+    <script>
+        // Translation data
+        const translations = {
+            en: {
+                title: "Global University Partnerships - R. Z.",
+                subtitle: "International collaborations with prestigious institutions around the world.",
+                chartTitle: "Partnership Statistics by Country",
+                partnerCountries: "Partner Countries",
+                universities: "Universities",
+                address: "Address",
+                totalPartnerships: "Total Partnerships:",
+                partnership: "Partnership",
+                partnerships: "Partnerships"
+            },
+            ar: {
+                title: "الشراكات الجامعية العالمية - R.Z",
+                subtitle: "التعاون الدولي مع مؤسسات مرموقة حول العالم",
+                chartTitle: "إحصائيات الشراكات حسب الدولة",
+                partnerCountries: "دول الشركاء",
+                universities: "الجامعات",
+                address: "العنوان",
+                totalPartnerships: "إجمالي الشراكات:",
+                partnership: "شراكة",
+                partnerships: "شراكات"
+            }
+        };
+        
+        // Sample data with English and Arabic names
+        const partnershipsData = {
+            "Pakistan": {
+                name: { en: "Pakistan", ar: "الباكستان " },
+                flag: "https://flagcdn.com/pk.svg",
+                universities: [
+                    { 
+                        name: { en: "Government College University Faisalabad", ar: "الكلية الحكومية جامعة فيصل أباد" }, 
+                        address: { en: "Cambridge, MA 02138, Pakistan", ar: "كامبريدج، ماساتشوستس 02138، الباكستات" } 
+                    },
+                    { 
+                        name: { en: "University of Punjab", ar: "جامعة البنجاب" }, 
+                        address: { en: "450 Serra Mall, Stanford, CA 94305, Pakistan", ar: "سيرا مول، ستانفورد، كاليفورنيا 94305،  الباكستات" } 
+                    }
+                ]
+            },
+            "United Kingdom": {
+                name: { en: "United Kingdom", ar: "المملكة المتحدة" },
+                flag: "https://flagcdn.com/gb.svg",
+                universities: [
+                    { 
+                        name: { en: "University of Oxford", ar: "جامعة أكسفورد" }, 
+                        address: { en: "Oxford OX1 2JD, UK", ar: "أكسفورد OX1 2JD، المملكة المتحدة" } 
+                    },
+                    { 
+                        name: { en: "University of Cambridge", ar: "جامعة كامبريدج" }, 
+                        address: { en: "The Old Schools, Trinity Ln, Cambridge CB2 1TN, UK", ar: "ذا أولد سكولز، ترينيتي لين، كامبريدج CB2 1TN، المملكة المتحدة" } 
+                    }
+                ]
+            },
+
+            "Netherlands": {
+                name: { en: "Netherlands", ar: "هولندا" },
+                flag: "https://flagcdn.com/nl.svg",
+                universities: [
+                    { 
+                        name: { en: "University of Twente", ar: "جامعة توينتي" }, 
+                        address: { en: "Oxford OX1 2JD, Netherlands", ar: "أكسفورد OX1 2JD، هولندا" } 
+                        }
+                ]
+            },
+
+
+            "Cyprus": {
+                name: { en: "Cyprus", ar: "قبرص" },
+                flag: "https://flagcdn.com/cy.svg",
+                universities: [
+                    { 
+                        name: { en: "Open University of Cyprus", ar: "جامعة قبرص المفتوحة" }, 
+                        address: { en: "Oxford OX1 2JD, Cyprus", ar: "أكسفورد OX1 2JD، قبرص" } 
+                        }
+                ]
+            },
+
+
+            "Slovakia": {
+                name: { en: "Slovakia", ar: "سلوفاكيا" },
+                flag: "https://flagcdn.com/sl.svg",
+                universities: [
+                    { 
+                        name: { en: "Slovak University of Agriculture in Nitra", ar: "الجامعة السلوفاكية للزراعة في نيترا" }, 
+                        address: { en: "Oxford OX1 2JD, Slovakia", ar: "أكسفورد OX1 2JD، سلوفاكيا" } 
+                        }
+                ]
+            },
+
+            "Romania": {
+                name: { en: "Romania", ar: "رومانيا" },
+                flag: "https://flagcdn.com/ro.svg",
+                universities: [
+                    { 
+                        name: { en: "The Technical University of Cluj-Napoca", ar: "جامعة كلوج نابوكا التقنية" }, 
+                        address: { en: "Oxford OX1 2JD, Romania", ar: "أكسفورد OX1 2JD، رومانيا" } 
+                        }
+                ]
+            },
+
+            "Germany": {
+                name: { en: "Germany", ar: "ألمانيا" },
+                flag: "https://flagcdn.com/de.svg",
+                universities: [
+                    { 
+                        name: { en: "University of Applied Management Study", ar: "جامعة دراسة الإدارة التطبيقية" }, 
+                        address: { en: "Arcisstraße 21, 80333 München, Germany", ar: "أركيس شتراسه 21، 80333 ميونخ، ألمانيا" } 
+  	            }
+                ]
+            },
+            "France": {
+                name: { en: "France", ar: "فرنسا" },
+                flag: "https://flagcdn.com/fr.svg",
+                universities: [
+                    { 
+                        name: { en: "University of Lille", ar: "جامعة ليل" }, 
+                        address: { en: "4 Pl. Jussieu, 75005 Paris, France", ar: "4 بلاس جوسيو، 75005 باريس، فرنسا" } 
+                    }
+                ]
+            },
+            "Iraq": {
+                name: { en: "Iraq", ar: "العراق" },
+                flag: "https://flagcdn.com/iq.svg",
+                universities: [
+                    { 
+                        name: { en: "Osol Al-Deen University College", ar: "كلية أصول الدين الجامعة" }, 
+                        address: { en: "7 Chome-3-1 Hongo, Bunkyo City, Tokyo 113-8654, Iraq", ar: "7 تشومي-3-1 هونغو، مدينة بانكيو، طوكيو 113-8654، العراق" } 
+                    }
+                ]
+            },
+
+            "Hungary": {
+                name: { en: "Hungary", ar: "المجر" },
+                flag: "https://flagcdn.com/hu.svg",
+                universities: [
+                    { 
+                        name: { en: "Szechenyi Istvan University", ar: "جامعة سيتشيني إستفان" }, 
+                        address: { en: "7 Chome-3-1 Hongo, Bunkyo City, Tokyo 113-8654, Hungary", ar: "7 تشومي-3-1 هونغو، مدينة بانكيو، طوكيو 113-8654، المجر" } 
+                    }
+                ]
+            },
+
+
+    	      "Canada": {
+                name: { en: "Canada", ar: " كندا " },
+                flag: "https://flagcdn.com/ca.svg",
+                universities: [
+                    { 
+                        name: { en: "Université du Québec à Montréal (UQAM)", ar: "جامعة كيبيك في مونتريال (UQAM)" }, 
+                        address: { en: "7 Chome-3-1 Hongo, Bunkyo City, Tokyo 113-8654, Canada", ar: "7 تشومي-3-1 هونغو، مدينة بانكيو، طوكيو 113-8654، اليابان" } 
+                    }
+                ]
+            },
+
+      "Jordan": {
+                name: { en: "Jordan", ar: "المملكة الأردنية الهاشمية" },
+                flag: "https://flagcdn.com/jo.svg",
+                universities: [
+                    { 
+                        name: { en: "Princess Sumaya University for Technology", ar: "جامعة الأميرة سمية" }, 
+                        address: { en: "Amman, Jordan", ar: "عمان - الأردن" } 
+                    },
+                   { 
+                        name: { en: "Middle-East University", ar: "جامعة الشرق الأوسط" }, 
+                        address: { en: "Amman, Jordan", ar: "عمان - الأردن" } 
+                    },
+                    { 
+                        name: { en: "Petra University", ar: "جامعة  البترا" }, 
+                        address: { en: "Amman, Jordan", ar: "عمان - الأردن" } 
+                    },
+                    { 
+                        name: { en: "Al-Ahilyya Amman University", ar: "الجامعة الأهلية عمان" }, 
+                        address: { en: "Amman, Jordan", ar: "عمان - الأردن" } 
+                    },
+                     { 
+                        name: { en: "Applied Science Private University", ar: "جامعة العلوم التطبيقية الخاصة" }, 
+                        address: { en: "Amman, Jordan", ar: "عمان - الأردن" } 
+                    }
+                ]
+            },
+
+
+      "Turkey": {
+                name: { en: "Turkey", ar: "تركيا" },
+                flag: "https://flagcdn.com/tr.svg",
+                universities: [
+                    { 
+                        name: { en: "The Ynuns Emre Institute", ar: "معهد يونس إمري" }, 
+                        address: { en: "Amman, Turkey", ar: "عمان - تركيا" } 
+                    },
+                   { 
+                        name: { en: "EuroMid Academy for Business and Technology", ar: "أكاديمية يوروميد للأعمال والتكنولوجيا" }, 
+                        address: { en: "Amman, Turkey", ar: "عمان - تركيا" } 
+                    },
+                    { 
+                        name: { en: "IAU - Istanbul Aydin University", ar: "IAU - جامعة اسطنبول أيدين" }, 
+                        address: { en: "Amman, Turkey", ar: "عمان - تركيا" } 
+                    },
+                    { 
+                        name: { en: "SIVAS CUMHURIYET UNIVERSITY", ar: "جامعة سيواس جمهوريت" }, 
+                        address: { en: "Amman, Turkey", ar: "عمان - تركيا" } 
+                    },
+                     { 
+                        name: { en: "Istanbul Sabahttin Zaim University", ar: "جامعة إسطنبول صباح الدين زعيم" }, 
+                        address: { en: "Amman, Turkey", ar: "عمان - تركيا" } 
+                    }
+                ]
+            },
+
+
+
+           "Austria": {
+                name: { en: "Austria", ar: "النمسا" },
+                flag: "https://flagcdn.com/at.svg",
+                universities: [
+                    { 
+                        name: { en: "University of Natural Resources and Life Sciences (BOKU)", ar: "جامعة الموارد الطبيعية وعلوم الحياة (BOKU)" }, 
+                        address: { en: "Parkville VIC 3010, Austria", ar: "باركفيل فيك 3010، النمسا" } 
+                    }
+                ]
+            },
+   
+           "Ukraine": {
+                name: { en: "Ukraine", ar: "اوكرانيا" },
+                flag: "https://flagcdn.com/ua.svg",
+                universities: [
+                    { 
+                        name: { en: "International European University", ar: "الجامعة الأوروبية الدولية" }, 
+                        address: { en: "Parkville VIC 3010, Ukraine", ar: "باركفيل فيك 3010، اوكرانيا" } 
+                    }
+                ]
+            },
+
+        
+
+
+           "Spain": {
+                name: { en: "Spain", ar: "اسبانيا" },
+                flag: "https://flagcdn.com/es.svg",
+                universities: [
+                    { 
+                        name: { en: "Technical University of Madrid (UPM", ar: "جامعة مدريد التقنية (UPM)" }, 
+                        address: { en: "Parkville VIC 3010, Spain", ar: "باركفيل فيك 3010، اسبانيا" } 
+                    },
+                    { 
+                        name: { en: "University of Leon", ar: "جامعة ليون" }, 
+                        address: { en: "Parkville VIC 3010, Spain", ar: "باركفيل فيك 3010، اسبانيا" } 
+                    },
+                    { 
+                        name: { en: "Central University of Catalonia - UVIC", ar: "جامعة كاتالونيا المركزية - UVIC" }, 
+                        address: { en: "Parkville VIC 3010, Spain", ar: "باركفيل فيك 3010، اسبانيا" } 
+                    },
+                    { 
+                        name: { en: "University of Barcelona", ar: "جامعة برشلونة" }, 
+                        address: { en: "Parkville VIC 3010, Spain", ar: "باركفيل فيك 3010، اسبانيا" } 
+                    }
+
+                ]
+            },
+ 
+
+
+           "Portugal": {
+                name: { en: "Portugal", ar: "البرتغال" },
+                flag: "https://flagcdn.com/po.svg",
+                universities: [
+                    { 
+                        name: { en: "Iscte - Lisbon University Institute", ar: "Iscte - معهد جامعة لشبونة" }, 
+                        address: { en: "Parkville VIC 3010, Porugal", ar: "باركفيل فيك 3010، البرتغال" } 
+                    }
+                ]
+         },
+
+           "India": {
+                name: { en: "India", ar: "الهند" },
+                flag: "https://flagcdn.com/in.svg",
+                universities: [
+                    { 
+                        name: { en: "CHANDIGARH GROUP OF COLLEGES, JHANJERI", ar: "مجموعة كليات شانديغار ، جانجيري" }, 
+                        address: { en: "Parkville VIC 3010, India", ar: "باركفيل فيك 3010، الهند" } 
+                    }
+                ]
+            }
+        };
+
+
+        // Current language (default to Arabic)
+        let currentLanguage = 'ar';
+        
+        // Dark mode state
+let darkMode = localStorage.getItem('darkMode') === 'enabled';
+        
+        // Chart instance
+        let partnershipsChart = null;
+        
+        // Function to translate the page
+        function translatePage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            
+
+// Re-trigger title and subtitle animations
+const titleEl = document.querySelector('[data-i18n="title"]');
+const subtitleEl = document.querySelector('[data-i18n="subtitle"]');
+
+// Remove animation classes
+titleEl.classList.remove('animate-fade-in');
+subtitleEl.classList.remove('animate-slide-up');
+
+// Force reflow
+void titleEl.offsetWidth;
+void subtitleEl.offsetWidth;
+
+// Re-add animation classes
+titleEl.classList.add('animate-fade-in');
+subtitleEl.classList.add('animate-slide-up');
+
+            // Update all elements with data-i18n attributes
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+            
+            // Update country list and info panel if they exist
+            if (document.getElementById('country-list')) {
+                updateCountryList();
+            }
+            
+            // Update chart if it exists
+            if (partnershipsChart) {
+                updateChart();
+            }
+        }
+        
+        // Function to update country list with current language
+ function updateCountryList() {
+    const countryListEl = document.getElementById('country-list');
+    countryListEl.innerHTML = '';
+
+    Object.keys(partnershipsData).forEach(countryKey => {
+        const countryData = partnershipsData[countryKey];
+        const countryName = countryData.name[currentLanguage];
+        const universityCount = countryData.universities.length;
+        const isRtl = currentLanguage === 'ar';
+
+        // Create elements in proper order based on language
+        const flagImg = `<img src="${countryData.flag}" class="w-8 h-6 rounded-sm shadow" alt="${countryName} flag">`;
+        const nameSpan = `<span class="font-medium text-gray-800 dark:text-gray-200">${countryName}</span>`;
+        const countSpan = `<span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
+            ${universityCount} ${universityCount === 1 ? translations[currentLanguage].partnership : translations[currentLanguage].partnerships}
+        </span>`;
+
+        // Change order depending on language
+        const contentOrder = isRtl
+            ? `${flagImg} ${nameSpan} ${countSpan}`
+            : `${flagImg} ${nameSpan} ${countSpan}`;
+
+        const countryItem = document.createElement('div');
+        countryItem.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4';
+        countryItem.innerHTML = `
+            <div class="flex justify-between items-center cursor-pointer country-header">
+                <div class="flex items-center gap-3 ${isRtl ? 'rtl' : 'ltr'}">
+                    ${contentOrder}
+                </div>
+                <i class="fas fa-chevron-down text-gray-500 arrow-icon"></i>
+            </div>
+            <div class="university-item">
+                ${countryData.universities.map(univ => `
+                    <div class="mt-3 ${isRtl ? 'rtl:mr-11' : 'ltr:ml-11'} bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <h4 class="font-semibold text-blue-700 dark:text-blue-400">${univ.name[currentLanguage]}</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">${univ.address[currentLanguage]}</p>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+        countryListEl.appendChild(countryItem);
+
+        // Add click event to toggle universities
+        const header = countryItem.querySelector('.country-header');
+        const arrowIcon = countryItem.querySelector('.arrow-icon');
+        const universityItem = countryItem.querySelector('.university-item');
+
+        header.addEventListener('click', () => {
+            universityItem.classList.toggle('expanded');
+            arrowIcon.classList.toggle('rotate-arrow');
+        });
+    });
+}
+
+
+
+        // Function to create or update the chart
+        function updateChart() {
+            const ctx = document.getElementById('partnershipsChart').getContext('2d');
+            
+            // Prepare data for chart
+            const countries = Object.keys(partnershipsData).map(key => partnershipsData[key].name[currentLanguage]);
+            const counts = Object.keys(partnershipsData).map(key => partnershipsData[key].universities.length);
+            
+            if (partnershipsChart) {
+                // Update existing chart
+                partnershipsChart.data.labels = countries;
+                partnershipsChart.data.datasets[0].data = counts;
+                partnershipsChart.update();
+            } else {
+                // Create new chart
+                partnershipsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: countries,
+                        datasets: [{
+                            label: translations[currentLanguage].partnerships,
+                            data: counts,
+                            backgroundColor: '#3B82F6',
+                            borderColor: '#1D4ED8',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        },
+  x: {
+                        ticks: {
+                            font: {
+                                family: 'Arial',    // Font family for country names
+                                size: 16,           // Font size
+                                weight: 'bold',     // Font weight
+                                color: '#FFFF00'       // Font color
+                            },
+                            padding: 10             // Padding for spacing between labels and bars
+ 
+                    }
+                },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${translations[currentLanguage].partnerships}: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        // Function to toggle dark mode
+        function toggleDarkMode() {
+    console.log('Dark mode toggled');
+
+            darkMode = !darkMode;
+            if (darkMode) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('darkMode', 'enabled');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('darkMode', 'disabled');
+            }
+        }
+        
+        // Initialize the page
+ 
+    document.addEventListener('DOMContentLoaded', function () {
+    // 3.1 Check for saved dark mode preference on page load
+    if (darkMode) {
+        document.documentElement.classList.add('dark');
+    }
+
+
+        
+            // Set up dark mode toggle buttons
+ 
+ 
+    
+
+    const darkToggleBottom = document.getElementById('darkModeToggleBottom');
+    if (darkToggleBottom) {
+        darkToggleBottom.addEventListener('click', toggleDarkMode);
+    }
+        
+            // Set up language switch buttons
+            document.getElementById('switchToEnglish').addEventListener('click', () => translatePage('en'));
+            document.getElementById('switchToArabic').addEventListener('click', () => translatePage('ar'));
+            
+            // Start with Arabic
+            translatePage('ar');
+            
+            // Set up the map
+            const width = document.getElementById('world-map').clientWidth;
+            const height = Math.min(window.innerHeight * 0.9, 700);
+            console.log('Width:', width, 'Height:', height);
+
+const svg = d3.select("#world-map")
+  .append("svg")
+  .attr("width", "100%")
+  .attr("height", "100%")
+  .attr("preserveAspectRatio", "xMidYMid meet")
+  .attr("viewBox", `0 0 ${width} ${height}`)
+  .style("display", "block"); // Removes default spacing
+
+            
+            const infoPanel = document.getElementById('info-panel');
+            const countryNameEl = document.getElementById('country-name');
+            const countryFlagEl = document.getElementById('country-flag');
+            const partnershipCountEl = document.getElementById('partnership-count');
+            const universitiesListEl = document.getElementById('universities-list');
+            
+            let highlightedCountry = null;
+            
+            // Load and display the world map
+            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world => {
+                const countries = topojson.feature(world, world.objects.countries).features;
+                
+ 
+
+const projection = d3.geoMercator()
+    .scale(width / 6)       // Zoom in a bit
+    .center([0, 25])          // Move map upward to hide southern parts
+    .translate([width / 2, height / 2]); // Keep it centered horizontally
+
+const path = d3.geoPath().projection(projection);
+
+                // Draw countries
+                svg.selectAll(".country")
+                    .data(countries)
+                    .enter()
+                    .append("path")
+                    .attr("class", d => {
+                        const countryName = d.properties.name;
+                        return partnershipsData[countryName] ? "country country-partnership" : "country";
+                    })
+                    .attr("d", path)
+                    .attr("id", d => "country-" + d.id)
+                    .on("mouseover", function(event, d) {
+                        const countryName = d.properties.name;
+                        if (partnershipsData[countryName]) {
+                            d3.select(this).classed("country-highlighted", true);
+                            
+                            // Position and show info panel
+                            const centroid = path.centroid(d);
+                            const [x, y] = centroid;
+                            
+                            infoPanel.style.left = `${x + 20}px`;
+                            infoPanel.style.top = `${y + 20}px`;
+                            
+                            // Update panel content
+                            const countryData = partnershipsData[countryName];
+                            countryNameEl.textContent = countryData.name[currentLanguage];
+                            countryFlagEl.src = countryData.flag;
+                            partnershipCountEl.textContent = `${countryData.universities.length} ${translations[currentLanguage].partnerships}`;
+                            
+                            universitiesListEl.innerHTML = '';
+                            countryData.universities.forEach(univ => {
+                                const univEl = document.createElement('div');
+                                univEl.className = 'bg-gray-50 dark:bg-gray-700 p-3 rounded-lg';
+                                univEl.innerHTML = `
+                                    <h4 class="font-semibold text-blue-700 dark:text-blue-400">${univ.name[currentLanguage]}</h4>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">${univ.address[currentLanguage]}</p>
+                                `;
+                                universitiesListEl.appendChild(univEl);
+                            });
+                            
+                            infoPanel.classList.add('visible');
+                        }
+                    })
+                    .on("mouseout", function(event, d) {
+                        const countryName = d.properties.name;
+                        if (partnershipsData[countryName] && highlightedCountry !== countryName) {
+                            d3.select(this).classed("country-highlighted", false);
+                            infoPanel.classList.remove('visible');
+                        }
+                    })
+                    .on("click", function(event, d) {
+                        const countryName = d.properties.name;
+                        if (partnershipsData[countryName]) {
+                            // Toggle highlight
+                            if (highlightedCountry === countryName) {
+                                d3.select(this).classed("country-highlighted", false);
+                                highlightedCountry = null;
+                                infoPanel.classList.remove('visible');
+                            } else {
+                                // Remove highlight from previously selected country
+                                if (highlightedCountry) {
+                                    const prevCountry = svg.select(`#country-${highlightedCountry}`);
+                                    if (prevCountry.size()) {
+                                        prevCountry.classed("country-highlighted", false);
+                                    }
+                                }
+                                
+                                d3.select(this).classed("country-highlighted", true);
+                                highlightedCountry = countryName;
+                                
+                                // Ensure info panel is visible
+                                infoPanel.classList.add('visible');
+                            }
+                        }
+                    });
+                
+                // Add partnership icons with count badges
+                Object.keys(partnershipsData).forEach(countryName => {
+                    const country = countries.find(c => c.properties.name === countryName);
+                    if (country) {
+                        const centroid = path.centroid(country);
+                        const universityCount = partnershipsData[countryName].universities.length;
+                        
+                        const iconGroup = svg.append("g")
+                            .attr("class", "partnership-icon")
+                            .attr("transform", `translate(${centroid[0]}, ${centroid[1]})`);
+                            
+                        iconGroup.append("circle")
+                            .attr("r", 8)
+                            .attr("fill", "#3182CE")
+                            .attr("stroke", "#fff")
+                            .attr("stroke-width", 1.5);
+                            
+                        iconGroup.append("text")
+                            .text(universityCount)
+                            .attr("text-anchor", "middle")
+                            .attr("dy", ".3em")
+                            .attr("fill", "white")
+                            .attr("font-size", "8px")
+                            .attr("font-weight", "bold");
+                    }
+                });
+                
+                // Populate country list
+                updateCountryList();
+                
+                // Create the chart
+                updateChart();
+            });
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                const newWidth = document.getElementById('world-map').clientWidth;
+                const newHeight = Math.min(window.innerHeight * 1.2, 900);
+                
+                projection.scale(newWidth / 5.8)
+                    .translate([newWidth / 2, newHeight / 2]);
+                
+                svg.attr("width", newWidth)
+                    .attr("height", newHeight)
+                    .attr("viewBox", [0, 0, newWidth, newHeight]);
+                
+                svg.selectAll("path").attr("d", path);
+                
+                // Reposition partnership icons
+                svg.selectAll(".partnership-icon").remove();
+                
+                d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(world => {
+                    const countries = topojson.feature(world, world.objects.countries).features;
+                    
+                    Object.keys(partnershipsData).forEach(countryName => {
+                        const country = countries.find(c => c.properties.name === countryName);
+                        if (country) {
+                            const centroid = path.centroid(country);
+                            const universityCount = partnershipsData[countryName].universities.length;
+                            
+                            const iconGroup = svg.append("g")
+                                .attr("class", "partnership-icon")
+                                .attr("transform", `translate(${centroid[0]}, ${centroid[1]})`);
+                                
+                            iconGroup.append("circle")
+                                .attr("r", 8)
+                                .attr("fill", "#3182CE")
+                                .attr("stroke", "#fff")
+                                .attr("stroke-width", 1.5);
+                                
+                            iconGroup.append("text")
+                                .text(universityCount)
+                                .attr("text-anchor", "middle")
+                                .attr("dy", ".3em")
+                                .attr("fill", "white")
+                                .attr("font-size", "8px")
+                                .attr("font-weight", "bold");
+                        }
+                    });
+                });
+            });
+        });
+
+ 
+  const quotes = {
+    en: [
+      "Education is the most powerful way which you can use to change the world.",
+      "Together we build bridges through knowledge.",
+      "Global partnerships for a brighter academic future.",
+      "Cooperation makes education borderless."
+    ],
+    ar: [
+      "التعليم هو أقوى طريق يمكنك استخدامه لتغيير العالم.",
+      "معًا نبني جسورًا من خلال المعرفة.",
+      "شراكات عالمية لمستقبل أكاديمي أكثر إشراقًا.",
+      "التعاون يجعل التعليم بلا حدود."
+    ]
+  };
+
+  let quoteIndex = 0;
+  function updateQuote() {
+    const lang = document.documentElement.lang || 'en';
+    const currentQuotes = quotes[lang] || quotes.en;
+    document.getElementById("dynamic-quote").textContent = currentQuotes[quoteIndex];
+    quoteIndex = (quoteIndex + 1) % currentQuotes.length;
+  }
+
+  setInterval(updateQuote, 5000); // Change quote every 5 seconds
+  updateQuote(); // Initial call
+ 
+
+    </script>
+</body>
+</html>
